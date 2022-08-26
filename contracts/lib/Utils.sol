@@ -28,12 +28,24 @@ library UtilsUint {
 
     /**
      * Check if block.timestamp has exceeded the allotted window.
-     * @param base:         The last time an action was taken
-     * @param duration:     Duration
+     * @param base:     The last time an action was taken
+     * @param delay:    Duration of the delay
      */
     function window(uint base, uint delay) external view returns (uint) {
         uint rn = block.timestamp;
         uint release_time = base + delay;
         return rn >= release_time ? 0 : release_time - rn;
+    }
+}
+
+library UtilsString {
+    /**
+     * Creates an array of uint with one element.
+     * @param element:  Uint to create an array of.
+     */
+    function asSingleton(string memory element) external pure returns (string[] memory) {
+        string[] memory array = new string[](1);
+        array[0] = element;
+        return array;
     }
 }
