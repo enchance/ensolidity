@@ -1,0 +1,10 @@
+{
+  "name": "ensolidity",
+  "version": "0.2.0",
+  "description": "Collection of Solidity contracts",
+  "main": "index.js",
+  "repository": "xxx",
+  "author": "enchance <enchance@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
