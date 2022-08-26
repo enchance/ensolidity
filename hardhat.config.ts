@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+
 // Plugins
 import "@nomiclabs/hardhat-solhint";
 import 'hardhat-test-utils'
@@ -26,10 +27,10 @@ const config: HardhatUserConfig = {
             chainId: 31337,
             accounts: [process.env.HARDHAT_PRIVATE_KEY!]
         },
-        // rinkeby: {
-        //     url: process.env.RINKEBY_URL || "",
-        //     accounts: [process.env.DEPLOY_PRIVATE_KEY!],
-        // },
+        goerli: {
+            url: process.env.GOERLI_URL || "",
+            accounts: [process.env.DEPLOY_PRIVATE_KEY!],
+        },
         mumbai: {
             url: process.env.MUMBAI_URL || "",
             accounts: [process.env.DEPLOY_PRIVATE_KEY!]
