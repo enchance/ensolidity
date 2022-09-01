@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import 'hardhat/console.sol';
 
-contract TokenAccess {
+contract VIPToken {
     mapping(address => mapping(uint32 => uint32)) public holds;
 
     function hasProject(address addr, uint32 project) public view returns (bool) {
