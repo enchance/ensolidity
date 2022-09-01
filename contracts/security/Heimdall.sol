@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 import './HeimdallCore.sol';
 
 
@@ -9,7 +9,7 @@ interface IHeimdallCore {
     function hasRole(bytes32 role, address account) external view returns (bool);
 }
 
-contract Heimdall is ContextUpgradeable {
+contract Heimdall is Context {
     IHeimdallCore public hdl;
 
     modifier onlyRole(bytes32 role) {

@@ -11,7 +11,7 @@ contract HeimdallCore is AccessControl {
 
     bytes32 internal constant HEIMDALL_OWNER = keccak256('OWNER');
     bytes32 internal constant HEIMDALL_CONTRACT = keccak256('CONTRACT');
-    mapping(string => bytes32) public gkroles;
+    mapping(string => bytes32) public hdlroles;
 
     constructor(address project_owner, address project_server, address[] memory admins) {
         // CORE access
@@ -28,29 +28,30 @@ contract HeimdallCore is AccessControl {
      * Assign roles to addersses.
      */
     function _initProject(address project_owner, address project_server, address[] memory admins) internal virtual {
-        gkroles['PROJECT.OWNER'] = keccak256('PROJECT.OWNER');
-        gkroles['PROJECT.SERVER'] = keccak256('PROJECT.SERVER');    // Use on server
-        gkroles['PROJECT.ADMIN'] = keccak256('PROJECT.ADMIN');
+        hdlroles['PROJECT.OWNER'] = keccak256('PROJECT.OWNER');
+        hdlroles['PROJECT.SERVER'] = keccak256('PROJECT.SERVER');    // Use on server
+        hdlroles['PROJECT.ADMIN'] = keccak256('PROJECT.ADMIN');
 
         // Give OWNER contral over the project
-        _grantRole(gkroles['PROJECT.OWNER'], HEIMDALL_OWNER);
+        _grantRole(hdlroles['PROJECT.OWNER'], msg.sender);
 
-//        // PROJECT access
-//        _grantRole(gkroles['PROJECT.OWNER'], project_owner);
-//        _grantRole(gkroles['PROJECT.SERVER'], project_owner);
-//        _grantRole(gkroles['PROJECT.ADMIN'], project_owner);
-//
-//        // SERVER access
-//        _grantRole(gkroles['PROJECT.SERVER'], project_server);
-//
-//        _setRoleAdmin(gkroles['PROJECT.OWNER'], OWNER);
-//        _setRoleAdmin(gkroles['PROJECT.SERVER'], gkroles['PROJECT.OWNER']);
-//        _setRoleAdmin(gkroles['PROJECT.ADMIN'], gkroles['PROJECT.OWNER']);
+        // PROJECT access
+        _grantRole(hdlroles['PROJECT.OWNER'], project_owner);
+        _grantRole(hdlroles['PROJECT.SERVER'], project_owner);
+        _grantRole(hdlroles['PROJECT.ADMIN'], project_owner);
+
+        // SERVER access
+        _grantRole(hdlroles['PROJECT.SERVER'], project_server);
+
+        // PROJECT admins
+        _setRoleAdmin(hdlroles['PROJECT.OWNER'], HEIMDALL_OWNER);
+        _setRoleAdmin(hdlroles['PROJECT.SERVER'], hdlroles['PROJECT.OWNER']);
+        _setRoleAdmin(hdlroles['PROJECT.ADMIN'], hdlroles['PROJECT.OWNER']);
 
         // ADMINS (optional)
         uint len = admins.length;
         for (uint i; i < len; i++) {
-            _grantRole(gkroles['PROJECT.ADMIN'], admins[i]);
+            _grantRole(hdlroles['PROJECT.ADMIN'], admins[i]);
         }
     }
 
@@ -65,7 +66,7 @@ contract HeimdallCore is AccessControl {
         bytes32 kcrole = keccak256(abi.encodePacked(role));
         return kcrole == keccak256(abi.encodePacked('OWNER')) ||
             kcrole == keccak256(abi.encodePacked('CONTRACT')) ||
-            kcrole == keccak256(abi.encodePacked('')) || kcrole == gkroles[role];
+            kcrole == keccak256(abi.encodePacked('')) || kcrole == hdlroles[role];
     }
 
     function addRole(string memory _role, string memory _admin, address[] memory addrs) external onlyRole(HEIMDALL_OWNER) {
@@ -73,8 +74,8 @@ contract HeimdallCore is AccessControl {
         if(!_exists(_admin)) revert InvalidAdmin();
 
         bytes32 role = keccak256(bytes(_role));
-        gkroles[_role] = role;
-        bytes32 admin = keccak256(bytes(_admin)) == HEIMDALL_OWNER ? HEIMDALL_OWNER : gkroles[_admin];
+        hdlroles[_role] = role;
+        bytes32 admin = keccak256(bytes(_admin)) == HEIMDALL_OWNER ? HEIMDALL_OWNER : hdlroles[_admin];
 
         _grantRole(role, msg.sender);
         _setRoleAdmin(role, admin);

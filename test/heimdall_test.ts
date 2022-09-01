@@ -10,7 +10,7 @@ import {keccak256, toUtf8Bytes} from "ethers/lib/utils";            // eslint-di
 
 let hdlowner: SignerWithAddress, adminuser: SignerWithAddress, owneruser: SignerWithAddress
 let foouser: SignerWithAddress, baruser: SignerWithAddress, serveruser: SignerWithAddress
-let Heimdall: ContractFactory, heimdall: any
+let HeimdallCore: ContractFactory, heimdallcore: any
 
 // keccack256 encoded from contract
 const HEIMDALL_OWNER = keccak256(toUtf8Bytes('OWNER'))
@@ -23,11 +23,10 @@ const init_contract = async () => {
     [owneruser, adminuser, foouser, baruser, hdlowner, serveruser] = await ethers.getSigners()
     
     const admins = [adminuser.address]
-    // const staffs = [staffuser.address]
     
-    Heimdall = await ethers.getContractFactory('Gatekeeper', hdlowner)
-    heimdall = await Heimdall.deploy(owneruser.address, serveruser.address, admins)
-    await heimdall.deployed()
+    HeimdallCore = await ethers.getContractFactory('HeimdallCore', hdlowner)
+    heimdallcore = await HeimdallCore.deploy(owneruser.address, serveruser.address, admins)
+    await heimdallcore.deployed()
 }
 
 describe('Heimdall the gatekeeper', () => {
@@ -40,48 +39,46 @@ describe('Heimdall the gatekeeper', () => {
     //     // console.log('OWNER', await heimdall.OWNER())
     //     // console.log('PROJECT.OWNER', await heimdall.gkroles('PROJECT.OWNER'))
     //     // console.log('PROJECT.ADMIN', await heimdall.gkroles('PROJECT.ADMIN'))
-    //     // console.log('PROJECT.STAFF', await heimdall.gkroles('PROJECT.STAFF'))
     //     // console.log('CONTRACT', await heimdall.gkroles('CONTRACT'))
-    //     // console.log(await heimdall.getKeccak256('PROJECT.STAFF'))
     // })
     
     it('Init', async () => {
-        {   // eslint-disable-line
+        {
             // Roles init
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_OWNER, hdlowner.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_OWNER, owneruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_OWNER, adminuser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_OWNER, foouser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_OWNER, baruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_OWNER, serveruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, hdlowner.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, owneruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, adminuser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, foouser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, serveruser.address)).is.false
             
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_CONTRACT, hdlowner.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_CONTRACT, owneruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_CONTRACT, adminuser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_CONTRACT, foouser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_CONTRACT, baruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(HEIMDALL_CONTRACT, serveruser.address)).is.false
-            
-            expect(await heimdall.connect(foouser).hasRole(OWNER, hdlowner.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(OWNER, owneruser.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(OWNER, adminuser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(OWNER, foouser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(OWNER, baruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(OWNER, serveruser.address)).is.false
-            
-            expect(await heimdall.connect(foouser).hasRole(ADMIN, hdlowner.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(ADMIN, owneruser.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(ADMIN, adminuser.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(ADMIN, foouser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(ADMIN, serveruser.address)).is.false
-            
-            expect(await heimdall.connect(foouser).hasRole(SERVER, hdlowner.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(SERVER, owneruser.address)).is.true
-            expect(await heimdall.connect(foouser).hasRole(SERVER, adminuser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(SERVER, foouser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(SERVER, baruser.address)).is.false
-            expect(await heimdall.connect(foouser).hasRole(SERVER, serveruser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, hdlowner.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, owneruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, adminuser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, foouser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, serveruser.address)).is.false
+
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, hdlowner.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, owneruser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, adminuser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, foouser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, serveruser.address)).is.false
+
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, hdlowner.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, owneruser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, adminuser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, foouser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, serveruser.address)).is.true
+
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, hdlowner.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, owneruser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, adminuser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, foouser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, serveruser.address)).is.false
         }
     })
     
