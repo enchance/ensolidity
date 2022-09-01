@@ -4,12 +4,13 @@ import {describe} from "mocha";                                                 
 import {ContractFactory} from "ethers";
 import {SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 import {INVALID_ADMIN, INVALID_ROLE, NO_ACCESS} from "./error_messages";          // eslint-disable-line
-import {keccak256, toUtf8Bytes} from "ethers/lib/utils";            // eslint-disable-line
+import {keccak256, toUtf8Bytes} from "ethers/lib/utils";
 
 
 
 let hdlowner: SignerWithAddress, adminuser: SignerWithAddress, owneruser: SignerWithAddress
 let foouser: SignerWithAddress, baruser: SignerWithAddress, serveruser: SignerWithAddress
+let staffuser: SignerWithAddress
 let HeimdallCore: ContractFactory, heimdallcore: any
 
 // keccack256 encoded from contract
@@ -18,9 +19,10 @@ const HEIMDALL_CONTRACT = keccak256(toUtf8Bytes('CONTRACT'))
 const OWNER = keccak256(toUtf8Bytes('PROJECT.OWNER'))
 const SERVER = keccak256(toUtf8Bytes('PROJECT.SERVER'))
 const ADMIN = keccak256(toUtf8Bytes('PROJECT.ADMIN'))
+const STAFF = keccak256(toUtf8Bytes('PROJECT.STAFF'))
 
 const init_contract = async () => {
-    [owneruser, adminuser, foouser, baruser, hdlowner, serveruser] = await ethers.getSigners()
+    [owneruser, adminuser, foouser, baruser, hdlowner, serveruser, staffuser] = await ethers.getSigners()
     
     const admins = [adminuser.address]
     
@@ -33,6 +35,9 @@ describe('Heimdall the gatekeeper', () => {
     
     beforeEach(async () => {
         await init_contract()
+    
+        // Add a staff
+        await heimdallcore.connect(adminuser).grantRole(STAFF, staffuser.address);
     })
     
     // it('Test', async () => {
@@ -50,6 +55,7 @@ describe('Heimdall the gatekeeper', () => {
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, foouser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, baruser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, serveruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, staffuser.address)).is.false
         
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, hdlowner.address)).is.true
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, owneruser.address)).is.false
@@ -57,6 +63,7 @@ describe('Heimdall the gatekeeper', () => {
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, foouser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, baruser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, serveruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, staffuser.address)).is.false
 
         expect(await heimdallcore.connect(foouser).hasRole(OWNER, hdlowner.address)).is.true
         expect(await heimdallcore.connect(foouser).hasRole(OWNER, owneruser.address)).is.true
@@ -64,6 +71,7 @@ describe('Heimdall the gatekeeper', () => {
         expect(await heimdallcore.connect(foouser).hasRole(OWNER, foouser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(OWNER, serveruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(OWNER, staffuser.address)).is.false
 
         expect(await heimdallcore.connect(foouser).hasRole(SERVER, hdlowner.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(SERVER, owneruser.address)).is.true
@@ -71,6 +79,7 @@ describe('Heimdall the gatekeeper', () => {
         expect(await heimdallcore.connect(foouser).hasRole(SERVER, foouser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(SERVER, serveruser.address)).is.true
+        expect(await heimdallcore.connect(foouser).hasRole(SERVER, staffuser.address)).is.false
 
         expect(await heimdallcore.connect(foouser).hasRole(ADMIN, hdlowner.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(ADMIN, owneruser.address)).is.true
@@ -78,9 +87,18 @@ describe('Heimdall the gatekeeper', () => {
         expect(await heimdallcore.connect(foouser).hasRole(ADMIN, foouser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
         expect(await heimdallcore.connect(foouser).hasRole(ADMIN, serveruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(ADMIN, staffuser.address)).is.false
+    
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, hdlowner.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, owneruser.address)).is.true
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, adminuser.address)).is.true
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, foouser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, serveruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(STAFF, staffuser.address)).is.true
     })
     
-    it.only('Access', async () => {
+    it('Access', async () => {
         const purge_roles = async (user: SignerWithAddress, role: any = null, acct: any = owneruser) => {
             if(role) await heimdallcore.connect(acct).revokeRole(role, user.address)
 
@@ -89,6 +107,7 @@ describe('Heimdall the gatekeeper', () => {
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, user.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, user.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, user.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, user.address)).is.false
         }
 
         // Role admins
@@ -97,14 +116,19 @@ describe('Heimdall the gatekeeper', () => {
         expect(await heimdallcore.getRoleAdmin(OWNER)).equals(HEIMDALL_OWNER)
         expect(await heimdallcore.getRoleAdmin(ADMIN)).equals(OWNER)
         expect(await heimdallcore.getRoleAdmin(SERVER)).equals(OWNER)
+        expect(await heimdallcore.getRoleAdmin(STAFF)).equals(ADMIN)
 
         // Granting roles
-        for(let account of [adminuser, foouser, baruser, serveruser]) {
+        for(let account of [adminuser, foouser, baruser, serveruser, staffuser]) {
             await expect(heimdallcore.connect(account).grantRole(HEIMDALL_OWNER, foouser.address)).is.revertedWith(NO_ACCESS)
             await expect(heimdallcore.connect(account).grantRole(HEIMDALL_CONTRACT, foouser.address)).is.revertedWith(NO_ACCESS)
             await expect(heimdallcore.connect(account).grantRole(OWNER, foouser.address)).is.revertedWith(NO_ACCESS)
             await expect(heimdallcore.connect(account).grantRole(ADMIN, foouser.address)).is.revertedWith(NO_ACCESS)
             await expect(heimdallcore.connect(account).grantRole(SERVER, foouser.address)).is.revertedWith(NO_ACCESS)
+
+            if(account.address !== adminuser.address) {
+                await expect(heimdallcore.connect(account).grantRole(STAFF, foouser.address)).is.revertedWith(NO_ACCESS)
+            }
 
             if(account.address !== serveruser.address || account.address !== owneruser.address) {
                 await expect(heimdallcore.connect(account).grantRole(SERVER, foouser.address)).is.revertedWith(NO_ACCESS)
@@ -123,6 +147,7 @@ describe('Heimdall the gatekeeper', () => {
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.false
             await purge_roles(baruser, HEIMDALL_OWNER, hdlowner)
 
             await heimdallcore.connect(hdlowner).grantRole(HEIMDALL_CONTRACT, baruser.address)
@@ -131,6 +156,7 @@ describe('Heimdall the gatekeeper', () => {
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.false
             await purge_roles(baruser, HEIMDALL_CONTRACT, hdlowner)
 
             await heimdallcore.connect(hdlowner).grantRole(OWNER, baruser.address)
@@ -139,6 +165,7 @@ describe('Heimdall the gatekeeper', () => {
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.true
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.false
             await purge_roles(baruser, OWNER, hdlowner)
 
             await heimdallcore.connect(owneruser).grantRole(ADMIN, baruser.address)
@@ -147,26 +174,39 @@ describe('Heimdall the gatekeeper', () => {
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.true
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.false
             await purge_roles(baruser, ADMIN)
-            
+
             await heimdallcore.connect(owneruser).grantRole(SERVER, baruser.address)
             expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.false
             await purge_roles(baruser, SERVER)
+    
+            await heimdallcore.connect(owneruser).grantRole(STAFF, baruser.address)
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.false
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.true
+            await purge_roles(baruser, STAFF)
 
             await heimdallcore.connect(hdlowner).grantRole(HEIMDALL_OWNER, baruser.address)
             await heimdallcore.connect(hdlowner).grantRole(HEIMDALL_CONTRACT, baruser.address)
             await heimdallcore.connect(hdlowner).grantRole(OWNER, baruser.address)
             await heimdallcore.connect(owneruser).grantRole(ADMIN, baruser.address)
             await heimdallcore.connect(owneruser).grantRole(SERVER, baruser.address)
+            await heimdallcore.connect(owneruser).grantRole(STAFF, baruser.address)
             expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_OWNER, baruser.address)).is.true
             expect(await heimdallcore.connect(foouser).hasRole(HEIMDALL_CONTRACT, baruser.address)).is.true
             expect(await heimdallcore.connect(foouser).hasRole(OWNER, baruser.address)).is.true
             expect(await heimdallcore.connect(foouser).hasRole(ADMIN, baruser.address)).is.true
             expect(await heimdallcore.connect(foouser).hasRole(SERVER, baruser.address)).is.true
+            expect(await heimdallcore.connect(foouser).hasRole(STAFF, baruser.address)).is.true
 
             // Manual revoking
             await heimdallcore.connect(hdlowner).revokeRole(HEIMDALL_OWNER, baruser.address)
@@ -174,45 +214,46 @@ describe('Heimdall the gatekeeper', () => {
             await heimdallcore.connect(hdlowner).revokeRole(OWNER, baruser.address)
             await heimdallcore.connect(owneruser).revokeRole(ADMIN, baruser.address)
             await heimdallcore.connect(owneruser).revokeRole(SERVER, baruser.address)
+            await heimdallcore.connect(owneruser).revokeRole(STAFF, baruser.address)
             await purge_roles(baruser)
         }
     })
 
-    // it('Role Management', async () => {
-    //     // Reequire
-    //     await expect(heimdallcore.connect(hdlowner).addRole('', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //     await expect(heimdallcore.connect(hdlowner).addRole('OWNER', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //     await expect(heimdallcore.connect(hdlowner).addRole('CONTRACT', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //     await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.OWNER', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //     await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.ADMIN', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //     await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.STAFF', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //     await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.SERVER', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
-    //
-    //     await expect(heimdallcore.connect(hdlowner).addRole('AAA', 'XXX', [])).is.revertedWith(INVALID_ADMIN)
-    //
-    //     for(let account of [adminuser, staffuser, owneruser, serveruser]) {
-    //         await expect(heimdallcore.connect(account).addRole('AAA', 'XXX', [])).is.revertedWith(NO_ACCESS)
-    //     }
-    //
-    //     const FOO = keccak256(toUtf8Bytes('FOO'))
-    //     await heimdallcore.connect(hdlowner).addRole('FOO', 'PROJECT.STAFF', [foouser.address])
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, foouser.address)).is.true
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, baruser.address)).is.false
-    //
-    //     await heimdallcore.connect(staffuser).grantRole(FOO, baruser.address)
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, baruser.address)).is.true
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, foouser.address)).is.true
-    //
-    //     for(let account of [foouser, baruser]) {
-    //         await expect(heimdallcore.connect(account).revokeRole(FOO, baruser.address)).is.revertedWith(NO_ACCESS)
-    //     }
-    //
-    //     await heimdallcore.connect(staffuser).revokeRole(FOO, baruser.address)
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, owneruser.address)).is.false
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, adminuser.address)).is.false
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, staffuser.address)).is.false
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, foouser.address)).is.true
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, baruser.address)).is.false
-    //     expect(await heimdallcore.connect(foouser).hasRole(FOO, serveruser.address)).is.false
-    // })
+    it('Role Management', async () => {
+        // Require
+        await expect(heimdallcore.connect(hdlowner).addRole('', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        await expect(heimdallcore.connect(hdlowner).addRole('OWNER', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        await expect(heimdallcore.connect(hdlowner).addRole('CONTRACT', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.OWNER', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.ADMIN', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.SERVER', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        await expect(heimdallcore.connect(hdlowner).addRole('PROJECT.STAFF', 'PROJECT.STAFF', [])).is.revertedWith(INVALID_ROLE)
+        
+        await expect(heimdallcore.connect(hdlowner).addRole('AAA', 'XXX', [])).is.revertedWith(INVALID_ADMIN)
+
+        for(let account of [adminuser, staffuser, owneruser, serveruser]) {
+            await expect(heimdallcore.connect(account).addRole('AAA', 'XXX', [])).is.revertedWith(NO_ACCESS)
+        }
+
+        const FOO = keccak256(toUtf8Bytes('FOO'))
+        await heimdallcore.connect(hdlowner).addRole('FOO', 'PROJECT.STAFF', [foouser.address])
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, foouser.address)).is.true
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, baruser.address)).is.false
+
+        await heimdallcore.connect(staffuser).grantRole(FOO, baruser.address)
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, baruser.address)).is.true
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, foouser.address)).is.true
+
+        for(let account of [foouser, baruser]) {
+            await expect(heimdallcore.connect(account).revokeRole(FOO, baruser.address)).is.revertedWith(NO_ACCESS)
+        }
+
+        await heimdallcore.connect(staffuser).revokeRole(FOO, baruser.address)
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, owneruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, adminuser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, foouser.address)).is.true
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, baruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, serveruser.address)).is.false
+        expect(await heimdallcore.connect(foouser).hasRole(FOO, staffuser.address)).is.false
+    })
 })

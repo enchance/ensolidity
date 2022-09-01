@@ -5,10 +5,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 contract HeimdallCore is AccessControl {
-    error InvalidRole();
-    error InvalidAdmin();
-    error PermissionDenied();
-
     bytes32 internal constant HEIMDALL_OWNER = keccak256('OWNER');
     bytes32 internal constant HEIMDALL_CONTRACT = keccak256('CONTRACT');
     mapping(string => bytes32) public hdlroles;
@@ -31,6 +27,7 @@ contract HeimdallCore is AccessControl {
         hdlroles['PROJECT.OWNER'] = keccak256('PROJECT.OWNER');
         hdlroles['PROJECT.SERVER'] = keccak256('PROJECT.SERVER');    // Use on server
         hdlroles['PROJECT.ADMIN'] = keccak256('PROJECT.ADMIN');
+        hdlroles['PROJECT.STAFF'] = keccak256('PROJECT.STAFF');
 
         // Give OWNER contral over the project
         _grantRole(hdlroles['PROJECT.OWNER'], msg.sender);
@@ -39,6 +36,7 @@ contract HeimdallCore is AccessControl {
         _grantRole(hdlroles['PROJECT.OWNER'], project_owner);
         _grantRole(hdlroles['PROJECT.SERVER'], project_owner);
         _grantRole(hdlroles['PROJECT.ADMIN'], project_owner);
+        _grantRole(hdlroles['PROJECT.STAFF'], project_owner);
 
         // SERVER access
         _grantRole(hdlroles['PROJECT.SERVER'], project_server);
@@ -47,11 +45,13 @@ contract HeimdallCore is AccessControl {
         _setRoleAdmin(hdlroles['PROJECT.OWNER'], HEIMDALL_OWNER);
         _setRoleAdmin(hdlroles['PROJECT.SERVER'], hdlroles['PROJECT.OWNER']);
         _setRoleAdmin(hdlroles['PROJECT.ADMIN'], hdlroles['PROJECT.OWNER']);
+        _setRoleAdmin(hdlroles['PROJECT.STAFF'], hdlroles['PROJECT.ADMIN']);
 
         // ADMINS (optional)
         uint len = admins.length;
         for (uint i; i < len; i++) {
             _grantRole(hdlroles['PROJECT.ADMIN'], admins[i]);
+            _grantRole(hdlroles['PROJECT.STAFF'], admins[i]);
         }
     }
 
@@ -70,8 +70,8 @@ contract HeimdallCore is AccessControl {
     }
 
     function addRole(string memory _role, string memory _admin, address[] memory addrs) external onlyRole(HEIMDALL_OWNER) {
-        if(_exists(_role)) revert InvalidRole();
-        if(!_exists(_admin)) revert InvalidAdmin();
+        if(_exists(_role)) revert('Invalid Role');
+        if(!_exists(_admin)) revert('Invalid Admin');
 
         bytes32 role = keccak256(bytes(_role));
         hdlroles[_role] = role;
