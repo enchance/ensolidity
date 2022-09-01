@@ -3,6 +3,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
 // Plugins
+import "@openzeppelin/hardhat-upgrades"
 import "@nomiclabs/hardhat-solhint";
 import 'hardhat-test-utils'
 import 'hardhat-log-remover'
